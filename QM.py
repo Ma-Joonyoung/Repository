@@ -89,7 +89,7 @@ class QM:
     def makeTable(self):
         table = [[None] + self.minterm]
         for i in range(len(self.PI)):
-            row = [{'minterm': self.PI[i]['minterm'], 'binary': self.PI[i]['binary']}]
+            row = [self.PI[i]]
             for num in self.minterm:
                 row.append(num in self.PI[i]['minterm'])
             table.append(row)
@@ -241,8 +241,8 @@ class QM:
         self.printExpression()
         while self.distributive():
             self.printExpression('After Apply (X + Y)(X + Z) = X + YZ')
-        self.multiply()
-        self.printExpression('After Multiplying Out')
+        if self.multiply():
+            self.printExpression('After Multiplying Out')
         if self.absorption():
             self.printExpression('After Apply X + XY = X')
 
@@ -253,7 +253,8 @@ class QM:
             cost = 0
             for r in term:
                 cost += self.numInput - len(self.table[r][0]['minterm']) ** 1 / 2 + 1
-            cost += len(term) + 1
+            if len(term) > 1:
+                cost += len(term) + 1
             print('Cost of', ''.join(map(lambda x: 'P' + str(x), sorted(list(term)))), 'is', int(cost))
 
             if minCost > cost:
@@ -289,7 +290,9 @@ class QM:
         return False
 
     def multiply(self):
+        multiplied = False
         while len(self.expression) > 1:
+            multiplied = True
             termA = self.expression.pop()
             termB = self.expression.pop()
             newTerm = set()
@@ -297,6 +300,7 @@ class QM:
                 for b in termB:
                     newTerm.add(frozenset(a | b))
             self.expression.append(newTerm)
+        return multiplied
 
     def absorption(self):
         willDelete = []
@@ -370,15 +374,12 @@ class QM:
         self.findPI()
         self.makeTable()
 
-        shrinked = True
-        while shrinked:
-            shrinked = False
-            if self.rows >= 2 and self.cols >= 2 and self.findEPI():
-                shrinked = True
-            if self.rows >= 2 and self.cols >= 2 and self.rowDominance():
-                shrinked = True
-            if self.rows >= 2 and self.cols >= 2 and self.colDominance():
-                shrinked = True
+        shrunk = True
+        while shrunk:
+            shrunk = False
+            for func in [self.findEPI, self.rowDominance, self.colDominance]:
+                if self.rows >= 2 and self.cols >= 2 and func():
+                    shrunk = True
 
         if self.rows >= 2 and self.cols >= 2:
             self.makeExpression()
@@ -399,14 +400,15 @@ if __name__ == '__main__':
     # qm = QM(5, [1, 3, 4, 5, 6, 15, 16, 17, 18, 27, 30, 31], [0, 4, 11, 18, 20, 24])
     # qm = QM(3, [0, 1, 2, 5, 6, 7], [])
     # qm = QM(6, [0, 1, 2, 5, 10, 15, 17, 19, 20, 25, 26, 30, 31, 33, 41, 43, 44, 45, 48, 51, 52, 53, 54, 57, 58, 59, 62], [9, 28, 35, 40, 42, 50, 55, 56, 60])
+    # qm = QM(6, [0, 2, 3, 6, 8, 11, 16, 17, 24, 26, 27, 29, 30, 31, 33, 35, 36, 38, 39, 42, 43, 44, 53, 55, 56, 57, 58, 61], [4, 18, 23, 40, 47, 59, 63])
     # qm.solve()
 
     # from random import randrange
-    #
+    # 
     # minterm = set()
     # for _ in range(32):
     #     minterm.add(randrange(0, 64))
-    #
+    # 
     # dontcare = set()
     # for _ in range(16):
     #     randInt = randrange(0, 64)
