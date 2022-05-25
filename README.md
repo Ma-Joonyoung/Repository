@@ -1,2 +1,2 @@
 # Quine-McCluskey Algorithm
-Digital Logic Desig
+Digital Logic Design
